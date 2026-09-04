@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FixLucknow - Citizen Civic Dashboard</title>
+    
+    <!-- Google Font (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#fef2f2', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c' }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Leaflet Map CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/custom.css">
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans antialiased pb-24 md:pb-12">
+
+    <!-- 1. STICKY TOP NAVBAR -->
+    <header class="bg-white/95 backdrop-blur-md sticky top-0 z-40 border-b border-slate-200 px-4 lg:px-8 py-3 transition-all">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <!-- Logo -->
+            <div class="flex items-center space-x-3 cursor-pointer">
+                <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white text-xl shadow-md shadow-brand-500/20">
+                    🏛️
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg tracking-tight text-slate-900 flex items-center gap-1.5">
+                        FixLucknow <span class="bg-brand-50 text-brand-600 border border-brand-500/20 text-[10px] font-bold px-1.5 py-0.5 rounded">LIVE</span>
+                    </h1>
+                    <p class="text-xs text-slate-500 font-medium">Citizen Civic Accountability</p>
+                </div>
+            </div>
+
+            <!-- Ward Selector & Action Button -->
+            <div class="flex items-center space-x-3">
+                <select id="wardFilter" onchange="filterByWard(this.value)" class="hidden sm:block text-xs font-semibold bg-slate-100 hover:bg-slate-200 border-none rounded-lg px-3 py-2 text-slate-700 outline-none cursor-pointer">
+                    <option value="all">📍 All Lucknow (Zone 1-8)</option>
+                    <option value="Gomti Nagar">Gomti Nagar</option>
+                    <option value="Hazratganj">Hazratganj</option>
+                    <option value="Indira Nagar">Indira Nagar</option>
+                    <option value="Alambagh">Alambagh</option>
+                    <option value="Chowk">Old Lucknow (Chowk)</option>
+                </select>
+
+                <button onclick="openReportModal()" class="bg-brand-600 hover:bg-brand-700 active:scale-95 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-brand-600/30 flex items-center space-x-2 transition-all">
+                    <i class="fa-solid fa-camera"></i>
+                    <span>Report Issue</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 lg:px-8 mt-4 space-y-6">
+
+        <!-- 2. HERO LIVE MAP SECTION -->
+        <section class="bg-white p-3 sm:p-4 rounded-3xl shadow-sm border border-slate-200 relative overflow-hidden">
+            <!-- Map Top Bar: Stats & Filters -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-3">
+                <!-- Counters -->
+                <div class="flex items-center space-x-2 text-xs font-bold">
+                    <span class="flex items-center gap-1.5 bg-red-50 text-red-700 px-3 py-1.5 rounded-lg border border-red-200/60">
+                        <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                        <span id="openCount">0</span> Open
+                    </span>
+                    <span class="flex items-center gap-1.5 bg-yellow-50 text-yellow-700 px-3 py-1.5 rounded-lg border border-yellow-200/60">
+                        <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                        <span id="progressCount">0</span> In Action
+                    </span>
+                    <span class="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-200/60">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span id="resolvedCount">0</span> Resolved
+                    </span>
+                </div>
+
+                <!-- Category Pills Filter -->
+                <div class="flex overflow-x-auto max-w-full pb-1 gap-1.5 text-xs font-semibold no-scrollbar">
+                    <button onclick="filterCategory('all')" class="category-pill active bg-slate-900 text-white px-3 py-1.5 rounded-lg whitespace-nowrap">All</button>
+                    <button onclick="filterCategory('infra')" class="category-pill bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg whitespace-nowrap">🕳️ Roads & Drains</button>
+                    <button onclick="filterCategory('sanitation')" class="category-pill bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg whitespace-nowrap">🗑️ Garbage</button>
+                    <button onclick="filterCategory('traffic')" class="category-pill bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg whitespace-nowrap">🚦 Traffic & Parking</button>
+                    <button onclick="filterCategory('governance')" class="category-pill bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg whitespace-nowrap">🏛️ Babu Delay</button>
+                </div>
+            </div>
+
+            <!-- The Leaflet Map Container -->
+            <div id="map" class="w-full h-[320px] sm:h-[400px] lg:h-[450px] rounded-2xl z-0 border border-slate-100"></div>
+        </section>
+
+        <!-- 3. THE 4 MASTER PILLARS (QUICK ACTION CARDS) -->
+        <section>
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500">Browse by Department</h2>
+                <span class="text-xs text-slate-400 font-medium">Click card to filter</span>
+            </div>
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <!-- Pillar 1 -->
+                <div onclick="filterCategory('infra')" class="bg-white p-4 rounded-2xl border border-slate-200 hover:border-brand-500 hover:shadow-md cursor-pointer transition group">
+                    <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-road"></i>
+                    </div>
+                    <h3 class="font-bold text-sm text-slate-800">Sadak & Infra</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Potholes, Taar, Naala</p>
+                </div>
+
+                <!-- Pillar 2 -->
+                <div onclick="filterCategory('sanitation')" class="bg-white p-4 rounded-2xl border border-slate-200 hover:border-brand-500 hover:shadow-md cursor-pointer transition group">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </div>
+                    <h3 class="font-bold text-sm text-slate-800">Safai & Hawa</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Kachra, AQI, Ganda Pani</p>
+                </div>
+
+                <!-- Pillar 3 -->
+                <div onclick="filterCategory('traffic')" class="bg-white p-4 rounded-2xl border border-slate-200 hover:border-brand-500 hover:shadow-md cursor-pointer transition group">
+                    <div class="w-10 h-10 rounded-xl bg-yellow-50 text-yellow-600 flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-traffic-light"></i>
+                    </div>
+                    <h3 class="font-bold text-sm text-slate-800">Traffic & Kabza</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Parking, Jam, Encroach</p>
+                </div>
+
+                <!-- Pillar 4 -->
+                <div onclick="filterCategory('governance')" class="bg-white p-4 rounded-2xl border border-slate-200 hover:border-brand-500 hover:shadow-md cursor-pointer transition group">
+                    <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition">
+                        <i class="fa-solid fa-building-columns"></i>
+                    </div>
+                    <h3 class="font-bold text-sm text-slate-800">Govt Services</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Babu Delay, Bribe, Hospital</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. WALL OF IMPACT (BEFORE VS AFTER PROOF) -->
+        <section class="bg-gradient-to-r from-slate-900 to-slate-800 rounded-3xl p-5 sm:p-6 text-white shadow-xl">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <span class="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-emerald-500/30">Action Taken</span>
+                    <h2 class="text-lg font-bold mt-1">Impact Wall: Lucknow Transformed</h2>
+                </div>
+                <span class="text-xs text-slate-400 hidden sm:block">Public accountability at work</span>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-4">
+                <!-- Impact Card 1 -->
+                <div class="bg-slate-800/80 rounded-2xl p-3 border border-slate-700/60 flex flex-col justify-between">
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="relative rounded-xl overflow-hidden bg-slate-950 aspect-video flex items-center justify-center text-xs text-slate-500 border border-slate-700">
+                            <img src="https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=400" alt="Before" class="object-cover w-full h-full opacity-70">
+                            <span class="absolute bottom-1 left-1 bg-red-600/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">BEFORE</span>
+                        </div>
+                        <div class="relative rounded-xl overflow-hidden bg-slate-950 aspect-video flex items-center justify-center text-xs text-slate-500 border border-slate-700">
+                            <img src="https://images.unsplash.com/photo-1590486803833-1c5dc8ddd4c8?w=400" alt="After" class="object-cover w-full h-full">
+                            <span class="absolute bottom-1 left-1 bg-emerald-600/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">RESOLVED</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm text-slate-100">Patrakarpuram Main Road Repaired</h4>
+                        <p class="text-xs text-slate-400 mt-0.5">Fixed in 5 Days after 84 Citizen Upvotes & LMC Tweet.</p>
+                    </div>
+                </div>
+
+                <!-- Impact Card 2 -->
+                <div class="bg-slate-800/80 rounded-2xl p-3 border border-slate-700/60 flex flex-col justify-between">
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div class="relative rounded-xl overflow-hidden bg-slate-950 aspect-video flex items-center justify-center text-xs text-slate-500 border border-slate-700">
+                            <img src="https://images.unsplash.com/photo-1605600659908-0ef719419d41?w=400" alt="Before" class="object-cover w-full h-full opacity-70">
+                            <span class="absolute bottom-1 left-1 bg-red-600/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">BEFORE</span>
+                        </div>
+                        <div class="relative rounded-xl overflow-hidden bg-slate-950 aspect-video flex items-center justify-center text-xs text-slate-500 border border-slate-700">
+                            <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400" alt="After" class="object-cover w-full h-full">
+                            <span class="absolute bottom-1 left-1 bg-emerald-600/90 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">RESOLVED</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm text-slate-100">Hazratganj Open Garbage Dump Cleared</h4>
+                        <p class="text-xs text-slate-400 mt-0.5">Cleared & Sanitized within 48 Hours of reporting.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. LIVE CITIZEN ACTIVITY FEED -->
+        <section>
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500">Live Reports from Lucknow</h2>
+                <span class="text-xs text-brand-600 font-semibold cursor-pointer">Auto-refreshing</span>
+            </div>
+
+            <!-- Feed Container (Dynamic items inserted via JS) -->
+            <div id="activityFeed" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </section>
+
+    </main>
+
+    <!-- 6. REPORT ISSUE MODAL -->
+    <div id="reportModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="font-extrabold text-slate-900 text-lg">Report Civic Problem</h3>
+                    <p class="text-xs text-slate-400">Directly tags Nagar Nigam & DM Lucknow</p>
+                </div>
+                <button onclick="closeReportModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 text-lg font-bold">&times;</button>
+            </div>
+
+            <!-- Form -->
+            <form onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <!-- Camera / Photo Box -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Upload Photo / Evidence</label>
+                    <div class="border-2 border-dashed border-slate-200 hover:border-brand-500 rounded-2xl p-6 text-center cursor-pointer bg-slate-50 transition">
+                        <div class="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center text-brand-600 mx-auto mb-2 text-xl">
+                            <i class="fa-solid fa-camera"></i>
+                        </div>
+                        <p class="text-xs font-semibold text-slate-700">Click to capture or upload</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">JPG, PNG up to 5MB</p>
+                    </div>
+                </div>
+
+                <!-- Category Selection -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Select Problem Category</label>
+                    <select id="modalCategory" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800 outline-none focus:border-brand-500" required>
+                        <option value="infra">🕳️ Tooti Sadak / Bada Gaddha (Roads & PWD)</option>
+                        <option value="infra">⚡ Latakte Bijli ke Taar (Electricity Board - LESA)</option>
+                        <option value="infra">🌊 Khula Sewer / Overflowing Naala (Jal Sansthan)</option>
+                        <option value="sanitation">🗑️ Kachre ka Dher / Open Dumping (LMC Swachhata)</option>
+                        <option value="traffic">🚗 Illegal Road Parking / Encroachment (Traffic Police)</option>
+                        <option value="governance">⏳ Babu File Delay / Corruption Issue (DM Office)</option>
+                    </select>
+                </div>
+
+                <!-- Issue Title -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Issue Description (1-Line)</label>
+                    <input type="text" id="modalTitle" placeholder="e.g., 3 mahine se sadak tooti hai, daily accidents" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 outline-none focus:border-brand-500" required />
+                </div>
+
+                <!-- Auto GPS Detection Box -->
+                <div class="bg-blue-50 border border-blue-200/60 p-3 rounded-xl flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-location-crosshairs text-blue-600 text-sm"></i>
+                        <span class="text-xs text-blue-900 font-medium">Location: <strong>Gomti Nagar, Lucknow (Auto-detected)</strong></span>
+                    </div>
+                    <span class="bg-blue-200/60 text-blue-800 text-[10px] font-bold px-1.5 py-0.5 rounded">GPS OK</span>
+                </div>
+
+                <!-- Privacy Toggle -->
+                <div class="flex items-center justify-between px-1">
+                    <span class="text-xs text-slate-600 font-medium">Post Anonymously (Hide Name)</span>
+                    <input type="checkbox" checked class="w-4 h-4 text-brand-600 rounded">
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-brand-600/30 transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>Submit & Tweet to Authority</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Mobile Floating Action Button (FAB) -->
+    <div class="fixed bottom-6 right-6 md:hidden z-30">
+        <button onclick="openReportModal()" class="w-14 h-14 bg-brand-600 text-white rounded-full shadow-2xl flex items-center justify-center text-xl active:scale-90 transition shadow-brand-600/50">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
