@@ -1,3 +1,29 @@
+// SheetDB URL (Apni link yahan daalo)
+const SHEETDB_URL = "https://sheetdb.io/api/v1/sjvetodglgyjj";
+
+// Google Sheet se live data uthane ka function
+async function loadIssuesFromDatabase() {
+    if (SHEETDB_URL.includes("sjvetodglgyjj")) return;
+    try {
+        const res = await fetch(SHEETDB_URL);
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+            currentIssues = data.map(item => ({
+                ...item,
+                lat: parseFloat(item.lat),
+                lng: parseFloat(item.lng),
+                upvotes: parseInt(item.upvotes) || 1
+            }));
+            applyFilters();
+        }
+    } catch (err) {
+        console.warn("SheetDB load error:", err);
+    }
+}
+
+
+
+
 // 1. Initialize Leaflet Map Centered on Lucknow
 const map = L.map('map', { zoomControl: false }).setView([26.8467, 80.9462], 12);
 
@@ -169,6 +195,14 @@ function handleFormSubmit(e) {
     };
 
     lucknowCivicData.unshift(newIssue);
+    // Google Sheet mein direct naya issue bhejo
+    if (!SHEETDB_URL.includes("sjvetodglgyjj")) {
+        fetch(SHEETDB_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: [newIssue] })
+        }).catch(err => console.warn("SheetDB save error:", err));
+    }
     renderMapMarkers(lucknowCivicData);
     renderFeed(lucknowCivicData);
     closeReportModal();
@@ -176,5 +210,10 @@ function handleFormSubmit(e) {
 }
 
 // Initial Run
+document.addEventListener('DOMContentLoaded', () => {
+    initMap();
+    renderFeed(currentIssues);
+    loadIssuesFromDatabase(); // <-- Bas ye 1 line add kar do
+});
 renderMapMarkers(lucknowCivicData);
 renderFeed(lucknowCivicData);
