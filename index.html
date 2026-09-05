@@ -314,5 +314,73 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="js/data.js"></script>
     <script src="js/app.js"></script>
+
+<!-- 7. MULTI-SOCIAL SHARE MODAL (6-in-1) -->
+    <div id="shareModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-base flex items-center gap-1.5">
+                        📢 <span>Escalate & Share Issue</span>
+                    </h3>
+                    <p class="text-xs text-slate-400">Amplify this issue to authorities & public</p>
+                </div>
+                <button onclick="closeShareModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center hover:bg-slate-200 cursor-pointer">&times;</button>
+            </div>
+
+            <!-- Issue Summary Badge -->
+            <div class="bg-slate-50 border border-slate-200/60 rounded-xl p-3 mb-4">
+                <h4 id="shareIssueTitle" class="font-bold text-slate-800 text-xs truncate">Title</h4>
+                <p id="shareIssueLocation" class="text-[11px] text-slate-500 mt-0.5">📍 Location</p>
+            </div>
+
+            <!-- 6 Social Media Buttons Grid -->
+            <div class="grid grid-cols-3 gap-2.5 mb-4">
+                <!-- 1. WhatsApp -->
+                <button onclick="shareTo('whatsapp')" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 active:scale-95 transition cursor-pointer">
+                    <i class="fa-brands fa-whatsapp text-2xl mb-1 text-emerald-600"></i>
+                    <span class="text-[11px] font-bold">WhatsApp</span>
+                </button>
+
+                <!-- 2. Twitter / X -->
+                <button onclick="shareTo('twitter')" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-900 active:scale-95 transition cursor-pointer">
+                    <i class="fa-brands fa-x-twitter text-2xl mb-1"></i>
+                    <span class="text-[11px] font-bold">Twitter (X)</span>
+                </button>
+
+                <!-- 3. Facebook -->
+                <button onclick="shareTo('facebook')" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-700 active:scale-95 transition cursor-pointer">
+                    <i class="fa-brands fa-facebook text-2xl mb-1 text-blue-600"></i>
+                    <span class="text-[11px] font-bold">Facebook</span>
+                </button>
+
+                <!-- 4. Telegram -->
+                <button onclick="shareTo('telegram')" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-sky-50 hover:bg-sky-100 text-sky-700 active:scale-95 transition cursor-pointer">
+                    <i class="fa-brands fa-telegram text-2xl mb-1 text-sky-500"></i>
+                    <span class="text-[11px] font-bold">Telegram</span>
+                </button>
+
+                <!-- 5. LinkedIn -->
+                <button onclick="shareTo('linkedin')" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 active:scale-95 transition cursor-pointer">
+                    <i class="fa-brands fa-linkedin text-2xl mb-1 text-indigo-600"></i>
+                    <span class="text-[11px] font-bold">LinkedIn</span>
+                </button>
+
+                <!-- 6. Copy Link -->
+                <button onclick="copyIssueLink()" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 active:scale-95 transition cursor-pointer">
+                    <i class="fa-solid fa-link text-2xl mb-1 text-slate-600"></i>
+                    <span class="text-[11px] font-bold" id="copyBtnText">Copy Link</span>
+                </button>
+            </div>
+
+            <!-- Native Share Button (Instagram, Stories, SMS) -->
+            <button onclick="nativeMobileShare()" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3 rounded-xl shadow-md text-xs flex items-center justify-center gap-2 cursor-pointer transition">
+                <i class="fa-solid fa-share-nodes"></i>
+                <span>More Options (Instagram / System Share)</span>
+            </button>
+        </div>
+    </div>
+    
 </body>
 </html>
