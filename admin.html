@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rebuild India - Master Admin Panel</title>
+    
+    <!-- Google Font & Tailwind -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-900 pb-20">
+
+    <!-- 1. LOGIN SCREEN (PIN PROTECTION) -->
+    <div id="loginScreen" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white max-w-sm w-full rounded-3xl p-6 shadow-2xl text-center">
+            <div class="w-14 h-14 bg-brand-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+                🔒
+            </div>
+            <h2 class="text-xl font-extrabold text-slate-800">Admin Control Room</h2>
+            <p class="text-xs text-slate-500 mt-1 mb-4">Enter master PIN to manage complaints</p>
+            
+            <form onsubmit="verifyPin(event)" class="space-y-3">
+                <input type="password" id="adminPin" placeholder="Enter PIN (Default: 1234)" class="w-full text-center text-lg tracking-widest bg-slate-50 border border-slate-200 rounded-xl p-3 font-bold outline-none focus:border-red-500" required>
+                <button type="submit" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3 rounded-xl shadow-lg transition">
+                    Unlock Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. MAIN ADMIN DASHBOARD -->
+    <div id="dashboardContent" class="hidden">
+        
+        <!-- Top Navigation -->
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-4 lg:px-8 py-3">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl">⚡</span>
+                    <div>
+                        <h1 class="font-extrabold text-slate-800 text-base">Rebuild India Admin</h1>
+                        <p class="text-[10px] text-slate-400">Live Google Sheet Sync</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <a href="index.html" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl transition">
+                        🌐 View Live Site
+                    </a>
+                    <button onclick="logout()" class="bg-red-50 text-red-600 hover:bg-red-100 text-xs font-bold px-3 py-2 rounded-xl transition">
+                        Lock 🔒
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 lg:px-8 mt-6 space-y-6">
+
+            <!-- Stats Bar -->
+            <div class="grid grid-cols-3 gap-3">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
+                    <p class="text-xs text-slate-400 font-bold uppercase">Total Issues</p>
+                    <h3 id="statTotal" class="text-2xl font-extrabold text-slate-800 mt-1">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
+                    <p class="text-xs text-red-500 font-bold uppercase">🔴 Pending</p>
+                    <h3 id="statOpen" class="text-2xl font-extrabold text-red-600 mt-1">0</h3>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-center">
+                    <p class="text-xs text-emerald-500 font-bold uppercase">🟢 Resolved</p>
+                    <h3 id="statResolved" class="text-2xl font-extrabold text-emerald-600 mt-1">0</h3>
+                </div>
+            </div>
+
+            <!-- Search & Filter Header -->
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-3">
+                <div class="relative w-full sm:w-72">
+                    <i class="fa-solid fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
+                    <input type="text" id="searchInput" oninput="renderAdminIssues()" placeholder="Search title, ward, location..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-xs outline-none">
+                </div>
+
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="refreshData()" class="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1">
+                        <i class="fa-solid fa-rotate"></i> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Issues Management List -->
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                    <h2 class="font-bold text-slate-800 text-sm">All Reported Complaints</h2>
+                    <span id="issuesCountBadge" class="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-0.5 rounded-full">0 Records</span>
+                </div>
+
+                <!-- Table Container -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                                <th class="p-3.5">Evidence</th>
+                                <th class="p-3.5">Title & Location</th>
+                                <th class="p-3.5">Category</th>
+                                <th class="p-3.5">Status</th>
+                                <th class="p-3.5 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="issuesTableBody" class="divide-y divide-slate-100 text-xs font-medium">
+                            <!-- JS Will Render Rows Here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- 3. EDIT ISSUE MODAL -->
+    <div id="editModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-900 text-base">Edit Complaint Data</h3>
+                <button onclick="closeEditModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 font-bold flex items-center justify-center">&times;</button>
+            </div>
+
+            <form onsubmit="saveEditedIssue(event)" class="space-y-3">
+                <input type="hidden" id="editId">
+                
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Issue Title</label>
+                    <input type="text" id="editTitle" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-semibold outline-none" required>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Location / Ward</label>
+                    <input type="text" id="editLocation" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none" required>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Latitude</label>
+                        <input type="text" id="editLat" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-600 mb-1">Longitude</label>
+                        <input type="text" id="editLng" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Photo URL</label>
+                    <input type="text" id="editImage" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs outline-none">
+                </div>
+
+                <button type="submit" id="saveEditBtn" class="w-full bg-slate-900 hover:bg-black text-white font-bold py-3 rounded-xl shadow-md transition mt-2">
+                    Save Changes to Google Sheet
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT: ADMIN ENGINE                   -->
+    <!-- ========================================== -->
+    <script>
+        const SHEETDB_URL = "https://sheetdb.io/api/v1/sjvetodglgyjj";
+        const MASTER_PIN = "1234"; // Apna Password yahan change kar sakte hain
+
+        let allIssues = [];
+
+        // 1. PIN Security
+        function verifyPin(e) {
+            e.preventDefault();
+            const entered = document.getElementById('adminPin').value;
+            if (entered === MASTER_PIN) {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('dashboardContent').classList.remove('hidden');
+                sessionStorage.setItem('admin_logged_in', 'true');
+                fetchAdminData();
+            } else {
+                alert("❌ Wrong PIN! Access Denied.");
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('admin_logged_in');
+            location.reload();
+        }
+
+        // Auto-login if session exists
+        if (sessionStorage.getItem('admin_logged_in') === 'true') {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboardContent').classList.remove('hidden');
+            window.onload = fetchAdminData;
+        }
+
+        // 2. Fetch all data from SheetDB
+        async function fetchAdminData() {
+            try {
+                const res = await fetch(SHEETDB_URL);
+                allIssues = await res.json();
+                renderAdminIssues();
+            } catch (err) {
+                alert("Failed to load Google Sheet data: " + err.message);
+            }
+        }
+
+        function refreshData() {
+            fetchAdminData();
+        }
+
+        // 3. Render Table Rows
+        function renderAdminIssues() {
+            const tbody = document.getElementById('issuesTableBody');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            tbody.innerHTML = '';
+
+            let filtered = allIssues.filter(item => 
+                (item.title || '').toLowerCase().includes(search) ||
+                (item.location || '').toLowerCase().includes(search) ||
+                (item.ward || '').toLowerCase().includes(search)
+            );
+
+            document.getElementById('issuesCountBadge').innerText = `${filtered.length} Issues`;
+            document.getElementById('statTotal').innerText = allIssues.length;
+            document.getElementById('statOpen').innerText = allIssues.filter(i => i.status === 'open').length;
+            document.getElementById('statResolved').innerText = allIssues.filter(i => i.status === 'resolved').length;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400">No issues found.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+
+                tr.innerHTML = `
+                    <td class="p-3.5">
+                        <img src="${item.image}" class="w-12 h-12 rounded-xl object-cover border border-slate-200" onerror="this.src='https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=500'">
+                    </td>
+                    <td class="p-3.5">
+                        <div class="font-bold text-slate-900">${item.title}</div>
+                        <div class="text-[11px] text-slate-400">📍 ${item.location} • (${item.lat}, ${item.lng})</div>
+                    </td>
+                    <td class="p-3.5">
+                        <span class="bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded uppercase text-[10px]">${item.category}</span>
+                    </td>
+                    <td class="p-3.5">
+                        <select onchange="updateStatus('${item.id}', this.value)" class="bg-slate-50 border border-slate-200 text-xs font-bold rounded-lg p-1.5 outline-none cursor-pointer">
+                            <option value="open" ${item.status === 'open' ? 'selected' : ''}>🔴 Open</option>
+                            <option value="in-progress" ${item.status === 'in-progress' ? 'selected' : ''}>🟡 In Action</option>
+                            <option value="resolved" ${item.status === 'resolved' ? 'selected' : ''}>🟢 Resolved</option>
+                        </select>
+                    </td>
+                    <td class="p-3.5 text-right space-x-1">
+                        <button onclick="openEditModal('${item.id}')" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
+                            <i class="fa-solid fa-pen"></i> Edit
+                        </button>
+                        <button onclick="deleteIssue('${item.id}')" class="bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 4. Quick Status Update (Direct to SheetDB)
+        async function updateStatus(id, newStatus) {
+            try {
+                await fetch(`${SHEETDB_URL}/id/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: { status: newStatus } })
+                });
+
+                const item = allIssues.find(i => i.id == id);
+                if (item) item.status = newStatus;
+                renderAdminIssues();
+                alert(`✅ Status changed to ${newStatus.toUpperCase()}!`);
+            } catch (err) {
+                alert("Failed to update status: " + err.message);
+            }
+        }
+
+        // 5. Delete Issue
+        async function deleteIssue(id) {
+            if (confirm("Are you sure you want to PERMANENTLY DELETE this complaint from Google Sheets?")) {
+                try {
+                    await fetch(`${SHEETDB_URL}/id/${id}`, { method: 'DELETE' });
+                    allIssues = allIssues.filter(i => i.id != id);
+                    renderAdminIssues();
+                    alert("🗑️ Deleted successfully from Google Sheets!");
+                } catch (err) {
+                    alert("Delete error: " + err.message);
+                }
+            }
+        }
+
+        // 6. Edit Modal Handling
+        function openEditModal(id) {
+            const item = allIssues.find(i => i.id == id);
+            if (!item) return;
+
+            document.getElementById('editId').value = item.id;
+            document.getElementById('editTitle').value = item.title;
+            document.getElementById('editLocation').value = item.location;
+            document.getElementById('editLat').value = item.lat;
+            document.getElementById('editLng').value = item.lng;
+            document.getElementById('editImage').value = item.image;
+
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        async function saveEditedIssue(e) {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const btn = document.getElementById('saveEditBtn');
+
+            btn.innerText = "Saving to Google Sheets...";
+            btn.disabled = true;
+
+            const updatedData = {
+                title: document.getElementById('editTitle').value,
+                location: document.getElementById('editLocation').value,
+                lat: document.getElementById('editLat').value,
+                lng: document.getElementById('editLng').value,
+                image: document.getElementById('editImage').value
+            };
+
+            try {
+                await fetch(`${SHEETDB_URL}/id/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: updatedData })
+                });
+
+                const index = allIssues.findIndex(i => i.id == id);
+                if (index !== -1) allIssues[index] = { ...allIssues[index], ...updatedData };
+
+                renderAdminIssues();
+                closeEditModal();
+                alert("✅ Complaint updated successfully in Google Sheet!");
+            } catch (err) {
+                alert("Update failed: " + err.message);
+            } finally {
+                btn.innerText = "Save Changes to Google Sheet";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
