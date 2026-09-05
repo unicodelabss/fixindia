@@ -66,9 +66,9 @@ function renderMapMarkers(data) {
                     <span class="text-slate-400 font-semibold">👍 ${item.upvotes || 1}</span>
                 </div>
                 <!-- YAHAN MULTI-SHARE BUTTON LAGA DIYA HAI -->
-                <button onclick="openShareModal('${safeTitle}', '${safeLoc}', '${safeDept}')" style="background:#dc2626; color:white; border:none; padding:6px 8px; border-radius:8px; width:100%; font-weight:bold; cursor:pointer;">
-                    📢 Escalate / Share
-                </button>
+                <button onclick="openShareModal('${safeTitle}', '${safeLoc}', '${safeDept}', '${item.image}')" style="background:#dc2626; color:white; border:none; padding:6px 8px; border-radius:8px; width:100%; font-weight:bold; cursor:pointer;">
+    📢 Escalate / Share
+</button>
             </div>
         `;
 
@@ -125,9 +125,9 @@ function renderFeed(data) {
                     <span>${item.upvotes || 1}</span>
                 </button>
                 <!-- YAHAN MULTI-SHARE BUTTON LAGA DIYA HAI -->
-                <button onclick="openShareModal('${safeTitle}', '${safeLoc}', '${safeDept}')" class="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1 cursor-pointer">
-                    <i class="fa-solid fa-bullhorn"></i> Escalate / Share
-                </button>
+                <button onclick="openShareModal('${safeTitle}', '${safeLoc}', '${safeDept}', '${item.image}')" class="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1 cursor-pointer">
+    <i class="fa-solid fa-bullhorn"></i> Escalate / Share
+</button>
             </div>
         `;
         feedContainer.appendChild(card);
