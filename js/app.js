@@ -226,8 +226,13 @@ function tweetAuthority(title, location, dept) {
 }
 
 // ==========================================
-// 8. MODAL & FORM SUBMISSION TO GOOGLE SHEETS
+// 8. MODAL, CAMERA, REAL GPS & GOOGLE SHEETS
 // ==========================================
+let capturedLat = 26.8467;
+let capturedLng = 80.9462;
+let capturedImage = "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=500";
+
+// Modal Open/Close
 function openReportModal() {
     document.getElementById('reportModal').classList.remove('hidden');
 }
@@ -236,44 +241,98 @@ function closeReportModal() {
     document.getElementById('reportModal').classList.add('hidden');
 }
 
+// 1. Photo Live Preview
+function previewPhoto(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('imagePreview');
+            const placeholder = document.getElementById('photoPlaceholder');
+            preview.src = e.target.result;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            capturedImage = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// 2. Real GPS Auto-Detect
+function getRealGPS() {
+    const statusText = document.getElementById('gpsStatusText');
+    const coordsText = document.getElementById('gpsCoordsText');
+
+    if (navigator.geolocation) {
+        statusText.innerText = "Locating...";
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                capturedLat = position.coords.latitude.toFixed(6);
+                capturedLng = position.coords.longitude.toFixed(6);
+                statusText.innerText = "GPS Captured ✅";
+                coordsText.innerText = `📍 Exact GPS: ${capturedLat}, ${capturedLng}`;
+                coordsText.classList.replace('text-slate-400', 'text-emerald-600');
+            },
+            (error) => {
+                alert("GPS Permission Denied. Aap manually location likh sakte hain.");
+                statusText.innerText = "Retry GPS";
+            },
+            { enableHighAccuracy: true }
+        );
+    } else {
+        alert("Aapka browser geolocation support nahi karta.");
+    }
+}
+
+// 3. Form Submit to Google Sheets
 async function handleFormSubmit(e) {
     e.preventDefault();
+    const submitBtn = document.getElementById('submitBtn');
     const titleInput = document.getElementById('modalTitle');
     const categoryInput = document.getElementById('modalCategory');
+    const locationInput = document.getElementById('modalLocation');
+
+    submitBtn.innerText = "Saving to Database...";
+    submitBtn.disabled = true;
 
     const newIssue = {
         id: "LKO-" + Math.floor(100 + Math.random() * 900),
         title: titleInput.value || "Civic Complaint",
         category: categoryInput.value || "infra",
-        ward: "Gomti Nagar",
-        location: "Gomti Nagar Main Road",
-        lat: (26.8500 + (Math.random() - 0.5) * 0.02).toFixed(4),
-        lng: (80.9500 + (Math.random() - 0.5) * 0.02).toFixed(4),
+        ward: locationInput.value || "Lucknow",
+        location: locationInput.value || "Lucknow Location",
+        lat: capturedLat,
+        lng: capturedLng,
         status: "open",
         upvotes: 1,
         dept: "@lucknow_lmc",
-        image: "https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=500"
+        image: capturedImage
     };
 
-    // 1. Send data to Google Sheets (SheetDB API)
     try {
         await fetch(SHEETDB_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ data: [newIssue] })
         });
-        console.log("✅ Saved to Google Sheets!");
+
+        civicIssues.unshift(newIssue);
+        applyFilters();
+        closeReportModal();
+
+        titleInput.value = '';
+        locationInput.value = '';
+
+        alert("✅ Real GPS aur Photo ke sath Complaint Google Sheet mein Save ho gayi!");
     } catch (err) {
-        console.warn("SheetDB save error:", err);
+        alert("Save Error: " + err.message);
+    } finally {
+        submitBtn.innerText = "Submit & Tweet Authority";
+        submitBtn.disabled = false;
     }
-
-    // 2. Instant UI update
-    civicIssues.unshift(newIssue);
-    applyFilters();
-    closeReportModal();
-    titleInput.value = '';
-
-    alert("✅ Issue reported successfully & saved to Google Sheet Database!");
 }
 
 // ==========================================
