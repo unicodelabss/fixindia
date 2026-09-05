@@ -266,11 +266,12 @@ function closeShareModal() {
 }
 
 // 2. Share to Specific Platforms (With Photo Evidence Link)
+// 2. Share with Text + Location + Authority Tags + Real Photo Link
 function shareTo(platform) {
     const siteUrl = window.location.href;
     
-    // Message with Photo Evidence Link attached
-    const msg = `🚨 Civic Issue Reported in Lucknow!\n\n📌 Issue: ${activeShareItem.title}\n📍 Location: ${activeShareItem.location}\n📸 Photo Evidence: ${activeShareItem.image}\n\nCc: ${activeShareItem.dept} @DMLucknow @lucknow_lmc please take immediate action.\n\n🌐 Track Live: ${siteUrl}`;
+    // Poora zaroori text + Location + Authorities + Photo Link
+    const msg = `🚨 Civic Issue in Lucknow!\n\n📌 Issue: ${activeShareItem.title}\n📍 Location: ${activeShareItem.location}\n📸 Proof Photo: ${activeShareItem.image}\n\nCc: ${activeShareItem.dept} @DMLucknow @lucknow_lmc please look into this.\n\n🌐 Track: ${siteUrl}`;
     
     const encodedMsg = encodeURIComponent(msg);
     const encodedUrl = encodeURIComponent(siteUrl);
