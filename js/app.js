@@ -208,8 +208,10 @@ function filterByWard(ward) {
 }
 
 // ==========================================
-// 7. UPVOTE & TWEET INTENT
+// 7. UPVOTE & MULTI-SOCIAL ESCALATION ENGINE
 // ==========================================
+let activeShareItem = { title: '', location: '', dept: '' };
+
 function upvoteIssue(btn, count) {
     const icon = btn.querySelector('i');
     const span = btn.querySelector('span');
@@ -217,6 +219,73 @@ function upvoteIssue(btn, count) {
         btn.classList.add('text-brand-600');
         icon.classList.replace('fa-regular', 'fa-solid');
         span.innerText = count + 1;
+    }
+}
+
+// 1. Open Share Modal
+function openShareModal(title, location, dept) {
+    activeShareItem = { title, location, dept };
+    document.getElementById('shareIssueTitle').innerText = title;
+    document.getElementById('shareIssueLocation').innerText = `📍 ${location}`;
+    document.getElementById('shareModal').classList.remove('hidden');
+}
+
+function closeShareModal() {
+    document.getElementById('shareModal').classList.add('hidden');
+    document.getElementById('copyBtnText').innerText = "Copy Link";
+}
+
+// 2. Share to Specific Platforms
+function shareTo(platform) {
+    const siteUrl = window.location.href;
+    const msg = `🚨 Civic Issue in Lucknow!\n\nIssue: ${activeShareItem.title}\n📍 Location: ${activeShareItem.location}\n\nCc: ${activeShareItem.dept} @DMLucknow @lucknow_lmc please take action.\n\nTrack Live on RebuildIndia: ${siteUrl}`;
+    const encodedMsg = encodeURIComponent(msg);
+    const encodedUrl = encodeURIComponent(siteUrl);
+
+    let shareLink = "";
+
+    switch(platform) {
+        case 'whatsapp':
+            shareLink = `https://api.whatsapp.com/send?text=${encodedMsg}`;
+            break;
+        case 'twitter':
+            shareLink = `https://twitter.com/intent/tweet?text=${encodedMsg}`;
+            break;
+        case 'facebook':
+            shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedMsg}`;
+            break;
+        case 'telegram':
+            shareLink = `https://t.me/share/url?url=${encodedUrl}&text=${encodedMsg}`;
+            break;
+        case 'linkedin':
+            shareLink = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+            break;
+    }
+
+    if (shareLink) window.open(shareLink, '_blank');
+}
+
+// 3. Copy Link to Clipboard
+function copyIssueLink() {
+    const shareText = `🚨 Civic Issue: ${activeShareItem.title} at ${activeShareItem.location}. Track on: ${window.location.href}`;
+    navigator.clipboard.writeText(shareText).then(() => {
+        document.getElementById('copyBtnText').innerText = "Copied! ✅";
+        setTimeout(() => {
+            document.getElementById('copyBtnText').innerText = "Copy Link";
+        }, 2000);
+    });
+}
+
+// 4. Native Mobile Share (Instagram, Snapchat, SMS)
+function nativeMobileShare() {
+    if (navigator.share) {
+        navigator.share({
+            title: `Rebuild India: ${activeShareItem.title}`,
+            text: `🚨 Civic Issue: ${activeShareItem.title} at ${activeShareItem.location}. Cc: ${activeShareItem.dept}`,
+            url: window.location.href
+        }).catch(err => console.log('Share dismissed'));
+    } else {
+        copyIssueLink();
     }
 }
 
