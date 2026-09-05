@@ -265,13 +265,20 @@ function closeShareModal() {
     document.getElementById('copyBtnText').innerText = "Copy Link";
 }
 
-// 2. Share to Specific Platforms (With Photo Evidence Link)
-// 2. Share with Text + Location + Authority Tags + Real Photo Link
+// 2. Share to Specific Platforms (STRICT FILTER: NO BASE64 IN TEXT)
 function shareTo(platform) {
     const siteUrl = window.location.href;
     
-    // Poora zaroori text + Location + Authorities + Photo Link
-    const msg = `🚨 Civic Issue in Lucknow!\n\n📌 Issue: ${activeShareItem.title}\n📍 Location: ${activeShareItem.location}\n📸 Proof Photo: ${activeShareItem.image}\n\nCc: ${activeShareItem.dept} @DMLucknow @lucknow_lmc please look into this.\n\n🌐 Track: ${siteUrl}`;
+    // Agar photo web link (http) hai tabhi link dalo, agar base64 hai toh clean text rakho
+    let photoLine = "";
+    if (activeShareItem.image && activeShareItem.image.startsWith('http')) {
+        photoLine = `\n📸 Proof Photo: ${activeShareItem.image}`;
+    } else {
+        photoLine = `\n📸 Evidence: Real Photo Uploaded on Portal`;
+    }
+
+    // Ekdum Clean, Formatted Message under 280 characters
+    const msg = `🚨 Civic Issue in Lucknow!\n\n📌 Issue: ${activeShareItem.title}\n📍 Location: ${activeShareItem.location}${photoLine}\n\nCc: ${activeShareItem.dept} @DMLucknow @lucknow_lmc please look into this.\n\n🌐 View Photo & Track Live: ${siteUrl}`;
     
     const encodedMsg = encodeURIComponent(msg);
     const encodedUrl = encodeURIComponent(siteUrl);
@@ -299,9 +306,10 @@ function shareTo(platform) {
     if (shareLink) window.open(shareLink, '_blank');
 }
 
-// 3. Copy Link + Photo Details
+// 3. Copy Link without Base64
 function copyIssueLink() {
-    const shareText = `🚨 Civic Issue: ${activeShareItem.title}\n📍 Location: ${activeShareItem.location}\n📸 Proof: ${activeShareItem.image}\n🌐 Track: ${window.location.href}`;
+    const siteUrl = window.location.href;
+    const shareText = `🚨 Civic Issue: ${activeShareItem.title}\n📍 Location: ${activeShareItem.location}\n📸 Evidence: Photo attached on live portal\n🌐 Track: ${siteUrl}`;
     navigator.clipboard.writeText(shareText).then(() => {
         document.getElementById('copyBtnText').innerText = "Copied! ✅";
         setTimeout(() => {
