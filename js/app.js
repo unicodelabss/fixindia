@@ -21,8 +21,9 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let markersLayer = L.layerGroup().addTo(map);
 
+
 // ==========================================
-// 3. RENDER MAP MARKERS
+// 3. RENDER MAP MARKERS (WITH MULTI-SHARE BUTTON)
 // ==========================================
 function renderMapMarkers(data) {
     markersLayer.clearLayers();
@@ -50,6 +51,11 @@ function renderMapMarkers(data) {
 
         const marker = L.marker([lat, lng], { icon: customIcon });
 
+        // Safe titles for popup
+        const safeTitle = (item.title || 'Civic Issue').replace(/'/g, "\\'");
+        const safeLoc = (item.location || 'Lucknow').replace(/'/g, "\\'");
+        const safeDept = (item.dept || '@lucknow_lmc');
+
         const popupContent = `
             <div class="font-sans text-xs w-48">
                 <img src="${item.image}" class="w-full h-20 object-cover rounded-lg mb-2" onerror="this.src='https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=500'">
@@ -59,8 +65,9 @@ function renderMapMarkers(data) {
                     ${statusTag}
                     <span class="text-slate-400 font-semibold">👍 ${item.upvotes || 1}</span>
                 </div>
-                <button onclick="tweetAuthority('${item.title}', '${item.location}', '${item.dept || '@lucknow_lmc'}')" class="w-full bg-[#1DA1F2] hover:bg-sky-600 text-white font-bold py-1.5 rounded-lg flex items-center justify-center gap-1 cursor-pointer">
-                    <i class="fa-brands fa-x-twitter"></i> Tweet Authority
+                <!-- YAHAN MULTI-SHARE BUTTON LAGA DIYA HAI -->
+                <button onclick="openShareModal('${safeTitle}', '${safeLoc}', '${safeDept}')" style="background:#dc2626; color:white; border:none; padding:6px 8px; border-radius:8px; width:100%; font-weight:bold; cursor:pointer;">
+                    📢 Escalate / Share
                 </button>
             </div>
         `;
@@ -71,7 +78,7 @@ function renderMapMarkers(data) {
 }
 
 // ==========================================
-// 4. RENDER CITIZEN ACTIVITY FEED
+// 4. RENDER CITIZEN FEED (WITH MULTI-SHARE BUTTON)
 // ==========================================
 function renderFeed(data) {
     const feedContainer = document.getElementById('activityFeed');
@@ -94,6 +101,10 @@ function renderFeed(data) {
         if (item.status === 'in-progress') badge = `<span class="bg-yellow-50 text-yellow-700 border border-yellow-200 text-[10px] font-bold px-2 py-0.5 rounded-full">🟡 ACTION</span>`;
         if (item.status === 'resolved') badge = `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full">🟢 RESOLVED</span>`;
 
+        const safeTitle = (item.title || 'Civic Issue').replace(/'/g, "\\'");
+        const safeLoc = (item.location || 'Lucknow').replace(/'/g, "\\'");
+        const safeDept = (item.dept || '@lucknow_lmc');
+
         const card = document.createElement('div');
         card.className = "bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition flex flex-col justify-between";
         card.innerHTML = `
@@ -113,8 +124,9 @@ function renderFeed(data) {
                     <i class="fa-regular fa-thumbs-up"></i>
                     <span>${item.upvotes || 1}</span>
                 </button>
-                <button onclick="tweetAuthority('${item.title}', '${item.location}', '${item.dept || '@lucknow_lmc'}')" class="text-xs font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1 cursor-pointer">
-                    <i class="fa-brands fa-x-twitter"></i> Tweet ${item.dept || '@lucknow_lmc'}
+                <!-- YAHAN MULTI-SHARE BUTTON LAGA DIYA HAI -->
+                <button onclick="openShareModal('${safeTitle}', '${safeLoc}', '${safeDept}')" class="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1 cursor-pointer">
+                    <i class="fa-solid fa-bullhorn"></i> Escalate / Share
                 </button>
             </div>
         `;
