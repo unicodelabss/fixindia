@@ -357,41 +357,39 @@ function closeReportModal() {
 }
 
 
-// 1. Photo Live Preview + Auto-Compressor (Under 30KB)
-function previewPhoto(event) {
+// 1. Photo Live Preview + Cloud Image Link Generator
+async function previewPhoto(event) {
     const file = event.target.files[0];
     if (file) {
+        // Live Preview dikhao
         const reader = new FileReader();
         reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                // Canvas bana kar photo ka size chhota karo
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                // Max width 400px rakho taaki Google Sheet mein aaram se fit ho
-                const maxWidth = 400;
-                const scale = maxWidth / img.width;
-                canvas.width = maxWidth;
-                canvas.height = img.height * scale;
-                
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                
-                // Low-size compressed image (Quality 0.5)
-                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
-                
-                const preview = document.getElementById('imagePreview');
-                const placeholder = document.getElementById('photoPlaceholder');
-                preview.src = compressedBase64;
-                preview.classList.remove('hidden');
-                placeholder.classList.add('hidden');
-                
-                // Save light-weight photo for Google Sheets
-                capturedImage = compressedBase64;
-            };
-            img.src = e.target.result;
+            const preview = document.getElementById('imagePreview');
+            const placeholder = document.getElementById('photoPlaceholder');
+            preview.src = e.target.result;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
         };
         reader.readAsDataURL(file);
+
+        // ImgBB par upload karke real short link banao
+        const formData = new FormData();
+        formData.append("image", file);
+
+        try {
+            // Free Public ImgBB Key
+            const res = await fetch("https://api.imgbb.com/1/upload?key=6d207e02198a847aa5ad3ac2292fc10a", {
+                method: "POST",
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success) {
+                capturedImage = data.data.url; // Real link: https://i.ibb.co/xyz.jpg
+                console.log("✅ Real Photo Link Generated:", capturedImage);
+            }
+        } catch (err) {
+            console.warn("ImgBB upload failed, using fallback:", err);
+        }
     }
 }
 
