@@ -226,60 +226,68 @@
                 <button onclick="closeReportModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 text-lg font-bold">&times;</button>
             </div>
 
-            <!-- Form -->
-            <form onsubmit="handleFormSubmit(event)" class="space-y-4">
-                <!-- Camera / Photo Box -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Upload Photo / Evidence</label>
-                    <div class="border-2 border-dashed border-slate-200 hover:border-brand-500 rounded-2xl p-6 text-center cursor-pointer bg-slate-50 transition">
-                        <div class="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center text-brand-600 mx-auto mb-2 text-xl">
-                            <i class="fa-solid fa-camera"></i>
-                        </div>
-                        <p class="text-xs font-semibold text-slate-700">Click to capture or upload</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">JPG, PNG up to 5MB</p>
-                    </div>
-                </div>
 
-                <!-- Category Selection -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Select Problem Category</label>
-                    <select id="modalCategory" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800 outline-none focus:border-brand-500" required>
-                        <option value="infra">🕳️ Tooti Sadak / Bada Gaddha (Roads & PWD)</option>
-                        <option value="infra">⚡ Latakte Bijli ke Taar (Electricity Board - LESA)</option>
-                        <option value="infra">🌊 Khula Sewer / Overflowing Naala (Jal Sansthan)</option>
-                        <option value="sanitation">🗑️ Kachre ka Dher / Open Dumping (LMC Swachhata)</option>
-                        <option value="traffic">🚗 Illegal Road Parking / Encroachment (Traffic Police)</option>
-                        <option value="governance">⏳ Babu File Delay / Corruption Issue (DM Office)</option>
-                    </select>
-                </div>
 
-                <!-- Issue Title -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Issue Description (1-Line)</label>
-                    <input type="text" id="modalTitle" placeholder="e.g., 3 mahine se sadak tooti hai, daily accidents" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 outline-none focus:border-brand-500" required />
+<form onsubmit="handleFormSubmit(event)" class="space-y-4">
+    
+    <!-- 1. REAL CAMERA & PHOTO PREVIEW -->
+    <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Upload Photo / Evidence</label>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="previewPhoto(event)">
+        
+        <div onclick="document.getElementById('cameraInput').click()" id="photoBox" class="border-2 border-dashed border-slate-200 hover:border-brand-500 rounded-2xl p-4 text-center cursor-pointer bg-slate-50 transition relative overflow-hidden min-h-[110px] flex flex-col items-center justify-center">
+            <div id="photoPlaceholder">
+                <div class="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-brand-600 mx-auto mb-1 text-lg">
+                    <i class="fa-solid fa-camera"></i>
                 </div>
+                <p class="text-xs font-semibold text-slate-700">Click to Open Camera / Gallery</p>
+                <p class="text-[10px] text-slate-400">JPG, PNG up to 5MB</p>
+            </div>
+            <!-- Live Preview Image (Hidden initially) -->
+            <img id="imagePreview" class="hidden absolute inset-0 w-full h-full object-cover rounded-2xl">
+        </div>
+    </div>
 
-                <!-- Auto GPS Detection Box -->
-                <div class="bg-blue-50 border border-blue-200/60 p-3 rounded-xl flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <i class="fa-solid fa-location-crosshairs text-blue-600 text-sm"></i>
-                        <span class="text-xs text-blue-900 font-medium">Location: <strong>Gomti Nagar, Lucknow (Auto-detected)</strong></span>
-                    </div>
-                    <span class="bg-blue-200/60 text-blue-800 text-[10px] font-bold px-1.5 py-0.5 rounded">GPS OK</span>
-                </div>
+    <!-- 2. CATEGORY SELECT -->
+    <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Select Category</label>
+        <select id="modalCategory" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800 outline-none" required>
+            <option value="infra">🕳️ Tooti Sadak / Bada Gaddha (Roads & PWD)</option>
+            <option value="infra">⚡ Latakte Bijli ke Taar (Electricity - LESA)</option>
+            <option value="infra">🌊 Khula Sewer / Naala (Jal Sansthan)</option>
+            <option value="sanitation">🗑️ Kachre ka Dher (LMC Swachhata)</option>
+            <option value="traffic">🚗 Illegal Parking / Kabza (Traffic Police)</option>
+        </select>
+    </div>
 
-                <!-- Privacy Toggle -->
-                <div class="flex items-center justify-between px-1">
-                    <span class="text-xs text-slate-600 font-medium">Post Anonymously (Hide Name)</span>
-                    <input type="checkbox" checked class="w-4 h-4 text-brand-600 rounded">
-                </div>
+    <!-- 3. ISSUE TITLE -->
+    <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">Issue Description (1-Line)</label>
+        <input type="text" id="modalTitle" placeholder="e.g., 2 mahine se naala overflow ho raha hai" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 outline-none" required />
+    </div>
 
-                <!-- Submit Button -->
-                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 active:scale-95 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-brand-600/30 transition flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-paper-plane"></i>
-                    <span>Submit & Tweet to Authority</span>
-                </button>
-            </form>
+    <!-- 4. MANUAL LOCATION + REAL GPS -->
+    <div>
+        <div class="flex justify-between items-center mb-1">
+            <label class="block text-xs font-bold text-slate-700">Exact Location / Landmark</label>
+            <button type="button" onclick="getRealGPS()" class="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                <i class="fa-solid fa-location-crosshairs"></i> <span id="gpsStatusText">Auto-detect GPS</span>
+            </button>
+        </div>
+        <input type="text" id="modalLocation" placeholder="e.g., Patrakarpuram, Gomti Nagar" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 outline-none" required />
+        <p id="gpsCoordsText" class="text-[10px] text-slate-400 mt-1">📍 GPS: Lucknow Center (Tap Auto-detect for exact pin)</p>
+    </div>
+
+    <!-- 5. SUBMIT BUTTON -->
+    <button type="submit" id="submitBtn" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-brand-600/30 transition flex items-center justify-center space-x-2 cursor-pointer">
+        <i class="fa-solid fa-paper-plane"></i>
+        <span>Submit & Tweet Authority</span>
+    </button>
+</form>
+
+
+
+            
         </div>
     </div>
 
