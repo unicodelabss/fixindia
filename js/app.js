@@ -219,10 +219,22 @@ function filterByWard(ward) {
     }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
 // ==========================================
-// 7. UPVOTE & MULTI-SOCIAL ESCALATION ENGINE
+// 7. UPVOTE & MULTI-SOCIAL ESCALATION ENGINE (WITH PHOTO ATTACHMENT)
 // ==========================================
-let activeShareItem = { title: '', location: '', dept: '' };
+let activeShareItem = { title: '', location: '', dept: '', image: '' };
 
 function upvoteIssue(btn, count) {
     const icon = btn.querySelector('i');
@@ -234,9 +246,15 @@ function upvoteIssue(btn, count) {
     }
 }
 
-// 1. Open Share Modal
-function openShareModal(title, location, dept) {
-    activeShareItem = { title, location, dept };
+// 1. Open Share Modal with Photo
+function openShareModal(title, location, dept, image) {
+    activeShareItem = { 
+        title: title || 'Civic Issue', 
+        location: location || 'Lucknow', 
+        dept: dept || '@lucknow_lmc',
+        image: image || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?w=500'
+    };
+
     document.getElementById('shareIssueTitle').innerText = title;
     document.getElementById('shareIssueLocation').innerText = `📍 ${location}`;
     document.getElementById('shareModal').classList.remove('hidden');
@@ -247,10 +265,13 @@ function closeShareModal() {
     document.getElementById('copyBtnText').innerText = "Copy Link";
 }
 
-// 2. Share to Specific Platforms
+// 2. Share to Specific Platforms (With Photo Evidence Link)
 function shareTo(platform) {
     const siteUrl = window.location.href;
-    const msg = `🚨 Civic Issue in Lucknow!\n\nIssue: ${activeShareItem.title}\n📍 Location: ${activeShareItem.location}\n\nCc: ${activeShareItem.dept} @DMLucknow @lucknow_lmc please take action.\n\nTrack Live on RebuildIndia: ${siteUrl}`;
+    
+    // Message with Photo Evidence Link attached
+    const msg = `🚨 Civic Issue Reported in Lucknow!\n\n📌 Issue: ${activeShareItem.title}\n📍 Location: ${activeShareItem.location}\n📸 Photo Evidence: ${activeShareItem.image}\n\nCc: ${activeShareItem.dept} @DMLucknow @lucknow_lmc please take immediate action.\n\n🌐 Track Live: ${siteUrl}`;
+    
     const encodedMsg = encodeURIComponent(msg);
     const encodedUrl = encodeURIComponent(siteUrl);
 
@@ -277,9 +298,9 @@ function shareTo(platform) {
     if (shareLink) window.open(shareLink, '_blank');
 }
 
-// 3. Copy Link to Clipboard
+// 3. Copy Link + Photo Details
 function copyIssueLink() {
-    const shareText = `🚨 Civic Issue: ${activeShareItem.title} at ${activeShareItem.location}. Track on: ${window.location.href}`;
+    const shareText = `🚨 Civic Issue: ${activeShareItem.title}\n📍 Location: ${activeShareItem.location}\n📸 Proof: ${activeShareItem.image}\n🌐 Track: ${window.location.href}`;
     navigator.clipboard.writeText(shareText).then(() => {
         document.getElementById('copyBtnText').innerText = "Copied! ✅";
         setTimeout(() => {
@@ -288,22 +309,35 @@ function copyIssueLink() {
     });
 }
 
-// 4. Native Mobile Share (Instagram, Snapchat, SMS)
-function nativeMobileShare() {
+// 4. Native Mobile Share (Attaches REAL Image File on Android/iOS)
+async function nativeMobileShare() {
+    const shareText = `🚨 Civic Issue: ${activeShareItem.title}\n📍 ${activeShareItem.location}\nCc: ${activeShareItem.dept} @DMLucknow @lucknow_lmc`;
+
     if (navigator.share) {
-        navigator.share({
-            title: `Rebuild India: ${activeShareItem.title}`,
-            text: `🚨 Civic Issue: ${activeShareItem.title} at ${activeShareItem.location}. Cc: ${activeShareItem.dept}`,
-            url: window.location.href
-        }).catch(err => console.log('Share dismissed'));
+        try {
+            // Convert photo to shareable file
+            const response = await fetch(activeShareItem.image);
+            const blob = await response.blob();
+            const file = new File([blob], 'civic_evidence.jpg', { type: 'image/jpeg' });
+
+            const shareData = {
+                title: `Rebuild India: ${activeShareItem.title}`,
+                text: shareText,
+                url: window.location.href
+            };
+
+            // If browser supports file sharing (WhatsApp, Instagram, etc.)
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                shareData.files = [file];
+            }
+
+            await navigator.share(shareData);
+        } catch (err) {
+            console.log('Native share completed or dismissed');
+        }
     } else {
         copyIssueLink();
     }
-}
-
-function tweetAuthority(title, location, dept) {
-    const text = encodeURIComponent(`🚨 Civic Problem Reported in Lucknow!\n\nIssue: ${title}\n📍 Location: ${location}\n\nCc: ${dept} @DMLucknow @lucknow_lmc please look into this.`);
-    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
 }
 
 // ==========================================
